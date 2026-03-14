@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 Basic Kanji Stroke Order Practice</title>
+  <style>
+    :root {
+      --bg: #f8f6fb;
+      --card: #ffffff;
+      --ink: #2f2740;
+      --muted: #6d6480;
+      --accent: #b094c4;
+      --accent-2: #ea6cb5;
+      --line: #e7deef;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #fbf9fe 0%, #f5f0fa 100%);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    h1 {
+      font-size: 2.1rem;
+      margin: 0 0 10px;
+    }
+
+    .intro {
+      color: var(--muted);
+      max-width: 780px;
+      margin-bottom: 28px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 26px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 16px;
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(64, 37, 97, 0.06);
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .kanji {
+      font-size: 3.2rem;
+      font-weight: 700;
+    }
+
+    .meta {
+      text-align: right;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .meaning {
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .order {
+      background: #faf7fd;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .order-title {
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    li + li { margin-top: 5px; }
+
+    .practice {
+      margin-top: 14px;
+    }
+
+    .practice-label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .boxes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .box {
+      aspect-ratio: 1 / 1;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      position: relative;
+      background:
+        linear-gradient(to right, transparent 49.5%, #eee3f3 49.5%, #eee3f3 50.5%, transparent 50.5%),
+        linear-gradient(to bottom, transparent 49.5%, #eee3f3 49.5%, #eee3f3 50.5%, transparent 50.5%),
+        #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      color: rgba(47, 39, 64, 0.14);
+      user-select: none;
+    }
+
+    .hint {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .highlight {
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    @media (max-width: 640px) {
+      .kanji { font-size: 2.8rem; }
+      h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>10 Basic Kanji Stroke Order Practice</h1>
+    <p class="intro">
+      This page gives you 10 beginner-friendly kanji, a simple stroke-order guide, and practice boxes.
+      A good beginner rule is <span class="highlight">top to bottom</span>, <span class="highlight">left to right</span>,
+      and usually <span class="highlight">horizontal before vertical</span>.
+    </p>
+
+    <div class="controls">
+      <button onclick="toggleHints()">Show / Hide Kanji Hints</button>
+      <button class="secondary" onclick="window.print()">Print Practice Sheet</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <p class="footer">
+      Tip: trace the faded kanji once, then cover it and write it again from memory while saying the meaning aloud.
+    </p>
+  </div>
+
+  <script>
+    const kanjiList = [
+      {
+        kanji: "一",
+        meaning: "one",
+        strokes: 1,
+        order: ["Draw one horizontal line from left to right."]
+      },
+      {
+        kanji: "二",
+        meaning: "two",
+        strokes: 2,
+        order: [
+          "Draw the top horizontal line from left to right.",
+          "Draw the longer bottom horizontal line from left to right."
+        ]
+      },
+      {
+        kanji: "三",
+        meaning: "three",
+        strokes: 3,
+        order: [
+          "Draw the top horizontal line.",
+          "Draw the middle horizontal line.",
+          "Draw the longest bottom horizontal line."
+        ]
+      },
+      {
+        kanji: "十",
+        meaning: "ten",
+        strokes: 2,
+        order: [
+          "Draw the horizontal line first.",
+          "Draw the vertical line second, crossing through it."
+        ]
+      },
+      {
+        kanji: "人",
+        meaning: "person",
+        strokes: 2,
+        order: [
+          "Draw the left-falling stroke first.",
+          "Draw the right-falling stroke second."
+        ]
+      },
+      {
+        kanji: "日",
+        meaning: "sun / day",
+        strokes: 4,
+        order: [
+          "Draw the left vertical line with the top horizontal connected.",
+          "Draw the top-right to bottom-right vertical side.",
+          "Draw the middle horizontal line inside.",
+          "Close with the bottom horizontal line."
+        ]
+      },
+      {
+        kanji: "月",
+        meaning: "moon / month",
+        strokes: 4,
+        order: [
+          "Draw the left vertical line with the top horizontal.",
+          "Draw the top-right side downward.",
+          "Draw the first inner horizontal stroke.",
+          "Draw the second inner stroke and lower closing line shape."
+        ]
+      },
+      {
+        kanji: "山",
+        meaning: "mountain",
+        strokes: 3,
+        order: [
+          "Draw the center vertical line first.",
+          "Draw the left side stroke second.",
+          "Draw the right side stroke third."
+        ]
+      },
+      {
+        kanji: "川",
+        meaning: "river",
+        strokes: 3,
+        order: [
+          "Draw the left vertical stroke.",
+          "Draw the middle vertical stroke.",
+          "Draw the right vertical stroke."
+        ]
+      },
+      {
+        kanji: "木",
+        meaning: "tree",
+        strokes: 4,
+        order: [
+          "Draw the horizontal line first.",
+          "Draw the vertical line second through the middle.",
+          "Draw the left diagonal branch.",
+          "Draw the right diagonal branch."
+        ]
+      }
+    ];
+
+    let showHints = true;
+
+    function renderCards() {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = kanjiList.map(item => `
+        <section class="card">
+          <div class="top">
+            <div class="kanji">${item.kanji}</div>
+            <div class="meta">${item.strokes} stroke${item.strokes > 1 ? 's' : ''}</div>
+          </div>
+          <div class="meaning"><strong>Meaning:</strong> ${item.meaning}</div>
+          <div class="order">
+            <div class="order-title">Stroke Order</div>
+            <ol>
+              ${item.order.map(step => `<li>${step}</li>`).join('')}
+            </ol>
+          </div>
+          <div class="practice">
+            <div class="practice-label">Practice Boxes</div>
+            <div class="boxes">
+              <div class="box">${showHints ? item.kanji : ''}</div>
+              <div class="box">${showHints ? item.kanji : ''}</div>
+              <div class="box"></div>
+            </div>
+            <div class="hint">Trace, copy, then write from memory.</div>
+          </div>
+        </section>
+      `).join('');
+    }
+
+    function toggleHints() {
+      showHints = !showHints;
+      renderCards();
+    }
+
+    renderCards();
+  </script>
+</body>
+</html>

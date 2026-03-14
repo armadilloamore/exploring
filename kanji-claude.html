@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radical Stroke Order</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1410;
+    --paper: #f5f0e8;
+    --warm: #c8a96e;
+    --red: #b5392a;
+    --fade: #d4c9b0;
+    --muted: #7a6e5f;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Subtle paper texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(180,160,120,0.07) 28px, rgba(180,160,120,0.07) 29px),
+      repeating-linear-gradient(90deg, transparent, transparent 28px, rgba(180,160,120,0.07) 28px, rgba(180,160,120,0.07) 29px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    text-align: center;
+    padding: 2.5rem 1rem 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  header h1 {
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    color: var(--ink);
+    text-transform: uppercase;
+  }
+
+  header p {
+    font-style: italic;
+    color: var(--muted);
+    font-size: 1rem;
+    margin-top: 0.3rem;
+    letter-spacing: 0.05em;
+  }
+
+  .divider {
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--warm), transparent);
+    margin: 1rem auto;
+  }
+
+  /* Radical grid */
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: center;
+    padding: 0.5rem 1.5rem 1rem;
+    max-width: 680px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .radical-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--fade);
+    background: rgba(245,240,232,0.7);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    backdrop-filter: blur(4px);
+  }
+
+  .radical-pill span.label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    font-style: italic;
+  }
+
+  .radical-pill:hover {
+    border-color: var(--warm);
+    background: rgba(200,169,110,0.12);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  .radical-pill.active {
+    border-color: var(--red);
+    background: rgba(181,57,42,0.07);
+    box-shadow: 0 0 0 1px var(--red);
+  }
+
+  /* Main stage */
+  .stage {
+    position: relative;
+    z-index: 1;
+    width: min(560px, 94vw);
+    margin: 0 auto 2rem;
+  }
+
+  .card {
+    background: rgba(255,253,248,0.9);
+    border: 1px solid var(--fade);
+    padding: 2rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* SVG canvas */
+  .canvas-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  #stroke-canvas {
+    width: 160px;
+    height: 160px;
+    border: 1px solid var(--fade);
+    background: #fff;
+    display: block;
+  }
+
+  /* Grid overlay on canvas */
+  .canvas-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .card-info {
+    flex: 1;
+  }
+
+  .kanji-char {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 3.5rem;
+    line-height: 1;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+
+  .kanji-name {
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+    margin-bottom: 0.15rem;
+  }
+
+  .kanji-meaning {
+    font-style: italic;
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .stroke-count-badge {
+    display: inline-block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--red);
+    border: 1px solid var(--red);
+    padding: 0.15rem 0.6rem;
+    margin-bottom: 0.7rem;
+  }
+
+  .rule-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    border: 1px solid var(--fade);
+    padding: 0.1rem 0.5rem;
+    margin: 0.15rem 0.1rem 0;
+    font-style: italic;
+  }
+
+  /* Steps */
+  .steps-section {
+    border-top: 1px solid var(--fade);
+    padding-top: 1.2rem;
+  }
+
+  .steps-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    margin-bottom: 0.8rem;
+  }
+
+  .steps-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .step-thumb {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  .step-thumb:hover { transform: scale(1.05); }
+
+  .step-thumb svg {
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--fade);
+    background: #fff;
+    transition: border-color 0.15s;
+  }
+
+  .step-thumb.active svg {
+    border-color: var(--red);
+    box-shadow: 0 0 0 1px var(--red);
+  }
+
+  .step-num {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .step-thumb.active .step-num { color: var(--red); }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  button {
+    font-family: 'Cormorant Garamond', serif;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 0.55rem 1.4rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .btn-primary:hover { background: var(--red); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--fade);
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+  }
+
+  .btn-ghost:hover { border-color: var(--warm); color: var(--ink); }
+
+  .step-indicator {
+    font-style: italic;
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-left: auto;
+  }
+
+  /* Tips */
+  .tip-box {
+    margin-top: 1.2rem;
+    border-left: 2px solid var(--warm);
+    padding: 0.6rem 0.9rem;
+    background: rgba(200,169,110,0.06);
+    font-style: italic;
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .tip-box strong {
+    color: var(--ink);
+    font-style: normal;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  /* Animate new stroke */
+  @keyframes strokeIn {
+    from { opacity: 0; stroke-dashoffset: 200; }
+    to   { opacity: 1; stroke-dashoffset: 0; }
+  }
+
+  .animated-stroke {
+    stroke-dasharray: 200;
+    animation: strokeIn 0.45s ease forwards;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>部首 · Bushu</h1>
+  <p>Common Radical Stroke Order</p>
+  <div class="divider"></div>
+</header>
+
+<div class="grid" id="radical-grid"></div>
+
+<div class="stage">
+  <div class="card" id="main-card">
+    <div class="card-top">
+      <div class="canvas-wrap">
+        <svg id="stroke-canvas" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- guide lines -->
+          <line x1="50" y1="5" x2="50" y2="95" stroke="#e8e0d0" stroke-width="0.5"/>
+          <line x1="5" y1="50" x2="95" y2="50" stroke="#e8e0d0" stroke-width="0.5"/>
+          <rect x="5" y="5" width="90" height="90" fill="none" stroke="#e8e0d0" stroke-width="0.5"/>
+        </svg>
+      </div>
+      <div class="card-info" id="card-info">
+        <div class="kanji-char" id="kanji-char">一</div>
+        <div class="kanji-name" id="kanji-name">Ichi / Hito</div>
+        <div class="kanji-meaning" id="kanji-meaning">one · the number one</div>
+        <div class="stroke-count-badge" id="stroke-badge">1 stroke</div>
+        <br>
+        <span class="rule-tag" id="rule-tags"></span>
+      </div>
+    </div>
+
+    <div class="steps-section">
+      <div class="steps-label">Stroke by stroke</div>
+      <div class="steps-row" id="steps-row"></div>
+      <div class="controls">
+        <button class="btn-ghost" id="btn-prev" onclick="prevStep()">← Back</button>
+        <button class="btn-primary" id="btn-next" onclick="nextStep()">Next stroke →</button>
+        <span class="step-indicator" id="step-indicator">Step 1 of 1</span>
+      </div>
+    </div>
+
+    <div class="tip-box" id="tip-box">
+      <strong>Tip</strong>
+      <span id="tip-text"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Radical data ───────────────────────────────────────────────────────────
+// Each stroke is an SVG path or set of paths drawn on 0-100 viewBox
+// steps[i] = array of path defs drawn UP TO that step (cumulative)
+const RADICALS = [
+  {
+    char: '一', name: 'Ichi', reading: 'いち', meaning: 'one',
+    strokes: 1,
+    rules: ['horizontal before vertical', 'left to right'],
+    tip: 'The single most fundamental stroke: a horizontal line drawn left to right with a slight downward taper at the end.',
+    steps: [
+      ['M 15,50 Q 50,46 85,50']
+    ]
+  },
+  {
+    char: '二', name: 'Ni', reading: 'に', meaning: 'two',
+    strokes: 2,
+    rules: ['top before bottom'],
+    tip: 'Two horizontal strokes: the top one is shorter. Both go left to right, top stroke first.',
+    steps: [
+      ['M 22,38 Q 50,34 78,38'],
+      ['M 22,38 Q 50,34 78,38', 'M 15,62 Q 50,58 85,62']
+    ]
+  },
+  {
+    char: '三', name: 'San', reading: 'さん', meaning: 'three',
+    strokes: 3,
+    rules: ['top before bottom'],
+    tip: 'Three horizontals: shortest on top, longest on bottom. The middle stroke tilts slightly upward to the right.',
+    steps: [
+      ['M 28,28 Q 50,24 72,28'],
+      ['M 28,28 Q 50,24 72,28','M 18,50 Q 50,46 82,50'],
+      ['M 28,28 Q 50,24 72,28','M 18,50 Q 50,46 82,50','M 15,72 Q 50,68 85,72']
+    ]
+  },
+  {
+    char: '十', name: 'Juu', reading: 'じゅう', meaning: 'ten',
+    strokes: 2,
+    rules: ['horizontal before vertical'],
+    tip: 'Horizontal first, then vertical. The vertical crosses the horizontal near the top — not at the centre.',
+    steps: [
+      ['M 15,40 Q 50,36 85,40'],
+      ['M 15,40 Q 50,36 85,40','M 50,15 L 50,88']
+    ]
+  },
+  {
+    char: '口', name: 'Kuchi', reading: 'くち', meaning: 'mouth',
+    strokes: 3,
+    rules: ['left before right', 'outside before inside', 'close at end'],
+    tip: 'Left vertical → top+right side (one stroke going right then down) → bottom closing stroke. Outside frame first, seal it last.',
+    steps: [
+      ['M 25,22 L 25,78'],
+      ['M 25,22 L 25,78','M 25,22 L 75,22 L 75,78'],
+      ['M 25,22 L 25,78','M 25,22 L 75,22 L 75,78','M 25,78 L 75,78']
+    ]
+  },
+  {
+    char: '日', name: 'Hi / Nichi', reading: 'ひ / にち', meaning: 'sun · day',
+    strokes: 4,
+    rules: ['outside before inside', 'close at end'],
+    tip: 'Left side → top + right side → middle bar → bottom close. The enclosure is always drawn before its interior.',
+    steps: [
+      ['M 25,15 L 25,85'],
+      ['M 25,15 L 25,85','M 25,15 L 75,15 L 75,85'],
+      ['M 25,15 L 25,85','M 25,15 L 75,15 L 75,85','M 25,52 L 75,52'],
+      ['M 25,15 L 25,85','M 25,15 L 75,15 L 75,85','M 25,52 L 75,52','M 25,85 L 75,85']
+    ]
+  },
+  {
+    char: '月', name: 'Tsuki / Gatsu', reading: 'つき / がつ', meaning: 'moon · month',
+    strokes: 4,
+    rules: ['outside before inside', 'left to right'],
+    tip: 'Same structure as 日 but the left side curves inward. Two inner strokes are short horizontals — not a full middle bar.',
+    steps: [
+      ['M 28,15 Q 20,50 28,85'],
+      ['M 28,15 Q 20,50 28,85','M 28,15 L 74,15 Q 80,50 74,85'],
+      ['M 28,15 Q 20,50 28,85','M 28,15 L 74,15 Q 80,50 74,85','M 28,44 L 74,44'],
+      ['M 28,15 Q 20,50 28,85','M 28,15 L 74,15 Q 80,50 74,85','M 28,44 L 74,44','M 28,65 L 74,65']
+    ]
+  },
+  {
+    char: '山', name: 'Yama', reading: 'やま', meaning: 'mountain',
+    strokes: 3,
+    rules: ['middle before sides (exception)'],
+    tip: 'Rare exception: centre peak first, then left slope, then right slope. Remember: mountain = centre → left → right.',
+    steps: [
+      ['M 50,10 L 50,88'],
+      ['M 50,10 L 50,88','M 20,45 L 20,88'],
+      ['M 50,10 L 50,88','M 20,45 L 20,88','M 80,45 L 80,88']
+    ]
+  },
+  {
+    char: '川', name: 'Kawa', reading: 'かわ', meaning: 'river',
+    strokes: 3,
+    rules: ['left before right'],
+    tip: 'Three vertical strokes, left to right. The leftmost tilts slightly, and each successive stroke is drawn taller.',
+    steps: [
+      ['M 22,55 Q 18,70 22,88'],
+      ['M 22,55 Q 18,70 22,88','M 50,22 L 50,88'],
+      ['M 22,55 Q 18,70 22,88','M 50,22 L 50,88','M 78,35 L 78,88']
+    ]
+  },
+  {
+    char: '木', name: 'Ki', reading: 'き', meaning: 'tree · wood',
+    strokes: 4,
+    rules: ['horizontal before vertical', 'left to right'],
+    tip: 'Horizontal bar → vertical trunk through it → left-falling stroke → right-falling stroke. The two branches always come last.',
+    steps: [
+      ['M 15,42 Q 50,38 85,42'],
+      ['M 15,42 Q 50,38 85,42','M 50,12 L 50,88'],
+      ['M 15,42 Q 50,38 85,42','M 50,12 L 50,88','M 50,62 Q 35,72 22,85'],
+      ['M 15,42 Q 50,38 85,42','M 50,12 L 50,88','M 50,62 Q 35,72 22,85','M 50,62 Q 65,72 78,85']
+    ]
+  },
+  {
+    char: '水', name: 'Mizu', reading: 'みず', meaning: 'water',
+    strokes: 4,
+    rules: ['left to right', 'top before bottom'],
+    tip: 'The centre vertical (with a hook) comes first, then the upper-left short stroke, then the two flowing left-right strokes. Water flows freely — so does its stroke order.',
+    steps: [
+      ['M 50,10 Q 54,50 46,88'],
+      ['M 50,10 Q 54,50 46,88','M 35,28 Q 28,22 24,30'],
+      ['M 50,10 Q 54,50 46,88','M 35,28 Q 28,22 24,30','M 38,50 Q 28,58 18,70'],
+      ['M 50,10 Q 54,50 46,88','M 35,28 Q 28,22 24,30','M 38,50 Q 28,58 18,70','M 56,42 Q 68,55 80,62']
+    ]
+  },
+  {
+    char: '火', name: 'Hi / Ka', reading: 'ひ / か', meaning: 'fire',
+    strokes: 4,
+    rules: ['left to right', 'top before bottom'],
+    tip: 'The central falling stroke first, then left dot, then two right-side strokes. Think of a flame — centre spine, then the outer sparks.',
+    steps: [
+      ['M 50,12 Q 45,45 38,85'],
+      ['M 50,12 Q 45,45 38,85','M 32,38 Q 20,55 18,72'],
+      ['M 50,12 Q 45,45 38,85','M 32,38 Q 20,55 18,72','M 55,35 Q 62,45 65,55'],
+      ['M 50,12 Q 45,45 38,85','M 32,38 Q 20,55 18,72','M 55,35 Q 62,45 65,55','M 62,55 Q 72,68 78,82']
+    ]
+  },
+  {
+    char: '土', name: 'Tsuchi', reading: 'つち', meaning: 'earth · soil',
+    strokes: 3,
+    rules: ['horizontal before vertical', 'top before bottom'],
+    tip: 'Top short horizontal → vertical down → long bottom horizontal. The bottom stroke is always longer than the top.',
+    steps: [
+      ['M 28,28 Q 50,24 72,28'],
+      ['M 28,28 Q 50,24 72,28','M 50,28 L 50,75'],
+      ['M 28,28 Q 50,24 72,28','M 50,28 L 50,75','M 15,75 Q 50,72 85,75']
+    ]
+  },
+  {
+    char: '人', name: 'Hito / Jin', reading: 'ひと / じん', meaning: 'person',
+    strokes: 2,
+    rules: ['left before right'],
+    tip: 'Left falling stroke first (longer), then right falling stroke. The two strokes lean against each other like a standing person.',
+    steps: [
+      ['M 50,12 Q 38,50 22,85'],
+      ['M 50,12 Q 38,50 22,85','M 50,12 Q 62,48 82,75']
+    ]
+  },
+  {
+    char: '手', name: 'Te / Shu', reading: 'て / しゅ', meaning: 'hand',
+    strokes: 4,
+    rules: ['top before bottom', 'horizontal before vertical'],
+    tip: 'Three horizontals from top to bottom, then a long curved vertical through them. The vertical is the last and boldest stroke.',
+    steps: [
+      ['M 20,25 Q 50,21 80,25'],
+      ['M 20,25 Q 50,21 80,25','M 15,45 Q 50,41 85,45'],
+      ['M 20,25 Q 50,21 80,25','M 15,45 Q 50,41 85,45','M 22,65 Q 50,61 78,65'],
+      ['M 20,25 Q 50,21 80,25','M 15,45 Q 50,41 85,45','M 22,65 Q 50,61 78,65','M 50,10 Q 54,55 40,90']
+    ]
+  },
+  {
+    char: '目', name: 'Me / Moku', reading: 'め / もく', meaning: 'eye',
+    strokes: 5,
+    rules: ['outside before inside', 'top before bottom'],
+    tip: 'Left side → top+right → first inner bar → second inner bar → bottom close. Think: draw the eye socket, then the iris lines.',
+    steps: [
+      ['M 28,12 L 28,88'],
+      ['M 28,12 L 28,88','M 28,12 L 72,12 L 72,88'],
+      ['M 28,12 L 28,88','M 28,12 L 72,12 L 72,88','M 28,40 L 72,40'],
+      ['M 28,12 L 28,88','M 28,12 L 72,12 L 72,88','M 28,40 L 72,40','M 28,62 L 72,62'],
+      ['M 28,12 L 28,88','M 28,12 L 72,12 L 72,88','M 28,40 L 72,40','M 28,62 L 72,62','M 28,88 L 72,88']
+    ]
+  },
+  {
+    char: '心', name: 'Kokoro / Shin', reading: 'こころ / しん', meaning: 'heart · mind',
+    strokes: 4,
+    rules: ['left to right'],
+    tip: 'A subtle one: left curved stroke → left-center dot → right-center dot → the sweeping right stroke with a hook. Left to right overall.',
+    steps: [
+      ['M 18,55 Q 22,40 30,60 Q 32,72 28,82'],
+      ['M 18,55 Q 22,40 30,60 Q 32,72 28,82','M 42,48 Q 40,52 42,58'],
+      ['M 18,55 Q 22,40 30,60 Q 32,72 28,82','M 42,48 Q 40,52 42,58','M 56,40 Q 54,46 56,52'],
+      ['M 18,55 Q 22,40 30,60 Q 32,72 28,82','M 42,48 Q 40,52 42,58','M 56,40 Q 54,46 56,52','M 58,30 Q 75,45 82,58 Q 88,68 78,82']
+    ]
+  },
+  {
+    char: '女', name: 'Onna / Jo', reading: 'おんな / じょ', meaning: 'woman',
+    strokes: 3,
+    rules: ['left to right', 'diagonal then horizontal'],
+    tip: 'Left-falling diagonal → right-falling diagonal (crossing the first) → horizontal base. The crossing of the diagonals is deliberate.',
+    steps: [
+      ['M 75,20 Q 50,45 18,72'],
+      ['M 75,20 Q 50,45 18,72','M 28,20 Q 52,48 78,80'],
+      ['M 75,20 Q 50,45 18,72','M 28,20 Q 52,48 78,80','M 15,52 Q 50,48 85,52']
+    ]
+  },
+  {
+    char: '子', name: 'Ko / Shi', reading: 'こ / し', meaning: 'child',
+    strokes: 3,
+    rules: ['top before bottom', 'outside before inside'],
+    tip: 'The curved arm strokes first (together as one flowing stroke) → horizontal bar through them → vertical with a leftward flick at bottom.',
+    steps: [
+      ['M 55,18 Q 72,30 68,50 Q 64,62 45,68'],
+      ['M 55,18 Q 72,30 68,50 Q 64,62 45,68','M 28,38 Q 50,34 72,38'],
+      ['M 55,18 Q 72,30 68,50 Q 64,62 45,68','M 28,38 Q 50,34 72,38','M 50,52 Q 48,72 38,88']
+    ]
+  }
+];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let current = 0;
+let step = 0;
+
+// ─── Render radical grid ─────────────────────────────────────────────────────
+function renderGrid() {
+  const grid = document.getElementById('radical-grid');
+  grid.innerHTML = '';
+  RADICALS.forEach((r, i) => {
+    const pill = document.createElement('div');
+    pill.className = 'radical-pill' + (i === current ? ' active' : '');
+    pill.innerHTML = `${r.char} <span class="label">${r.meaning}</span>`;
+    pill.onclick = () => selectRadical(i);
+    grid.appendChild(pill);
+  });
+}
+
+// ─── Select radical ───────────────────────────────────────────────────────────
+function selectRadical(i) {
+  current = i;
+  step = 0;
+  renderGrid();
+  renderCard();
+}
+
+// ─── Render card ─────────────────────────────────────────────────────────────
+function renderCard() {
+  const r = RADICALS[current];
+
+  document.getElementById('kanji-char').textContent = r.char;
+  document.getElementById('kanji-name').textContent = r.name + ' (' + r.reading + ')';
+  document.getElementById('kanji-meaning').textContent = r.meaning;
+  document.getElementById('stroke-badge').textContent = r.strokes + (r.strokes === 1 ? ' stroke' : ' strokes');
+  document.getElementById('rule-tags').innerHTML = r.rules.map(rule => `<span class="rule-tag">${rule}</span>`).join('');
+  document.getElementById('tip-text').textContent = r.tip;
+
+  renderMainCanvas();
+  renderStepThumbs();
+  renderControls();
+}
+
+// ─── Draw strokes on a given SVG element ─────────────────────────────────────
+function drawStrokes(svg, paths, highlightLast = false, animate = false) {
+  // Remove previous strokes (keep guide lines)
+  Array.from(svg.querySelectorAll('.stroke-path')).forEach(el => el.remove());
+
+  paths.forEach((d, i) => {
+    const isLast = i === paths.length - 1;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    path.classList.add('stroke-path');
+
+    if (highlightLast && isLast) {
+      path.setAttribute('stroke', '#b5392a');
+      path.setAttribute('stroke-width', '4.5');
+      if (animate) path.classList.add('animated-stroke');
+    } else {
+      path.setAttribute('stroke', '#1a1410');
+      path.setAttribute('stroke-width', '4');
+    }
+    svg.appendChild(path);
+  });
+}
+
+// ─── Main canvas ─────────────────────────────────────────────────────────────
+function renderMainCanvas() {
+  const r = RADICALS[current];
+  const svg = document.getElementById('stroke-canvas');
+  const paths = r.steps[step];
+  drawStrokes(svg, paths, true, true);
+}
+
+// ─── Step thumbnails ─────────────────────────────────────────────────────────
+function renderStepThumbs() {
+  const r = RADICALS[current];
+  const row = document.getElementById('steps-row');
+  row.innerHTML = '';
+
+  r.steps.forEach((paths, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'step-thumb' + (i === step ? ' active' : '');
+    thumb.onclick = () => { step = i; renderMainCanvas(); renderStepThumbs(); renderControls(); };
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+
+    // guide lines
+    const gl1 = document.createElementNS('http://www.w3.org/2000/svg','line');
+    gl1.setAttribute('x1','50'); gl1.setAttribute('y1','5'); gl1.setAttribute('x2','50'); gl1.setAttribute('y2','95');
+    gl1.setAttribute('stroke','#e8e0d0'); gl1.setAttribute('stroke-width','0.5');
+    const gl2 = document.createElementNS('http://www.w3.org/2000/svg','line');
+    gl2.setAttribute('x1','5'); gl2.setAttribute('y1','50'); gl2.setAttribute('x2','95'); gl2.setAttribute('y2','50');
+    gl2.setAttribute('stroke','#e8e0d0'); gl2.setAttribute('stroke-width','0.5');
+    const gl3 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    gl3.setAttribute('x','5'); gl3.setAttribute('y','5'); gl3.setAttribute('width','90'); gl3.setAttribute('height','90');
+    gl3.setAttribute('fill','none'); gl3.setAttribute('stroke','#e8e0d0'); gl3.setAttribute('stroke-width','0.5');
+    svg.appendChild(gl1); svg.appendChild(gl2); svg.appendChild(gl3);
+
+    drawStrokes(svg, paths, true);
+
+    const num = document.createElement('div');
+    num.className = 'step-num';
+    num.textContent = i + 1;
+
+    thumb.appendChild(svg);
+    thumb.appendChild(num);
+    row.appendChild(thumb);
+  });
+}
+
+// ─── Controls ────────────────────────────────────────────────────────────────
+function renderControls() {
+  const r = RADICALS[current];
+  document.getElementById('step-indicator').textContent = `Stroke ${step + 1} of ${r.strokes}`;
+  document.getElementById('btn-prev').disabled = step === 0;
+  document.getElementById('btn-next').textContent = step === r.strokes - 1 ? 'Complete ✓' : 'Next stroke →';
+  document.getElementById('btn-next').disabled = step === r.strokes - 1;
+}
+
+function nextStep() {
+  const r = RADICALS[current];
+  if (step < r.strokes - 1) {
+    step++;
+    renderMainCanvas();
+    renderStepThumbs();
+    renderControls();
+  }
+}
+
+function prevStep() {
+  if (step > 0) {
+    step--;
+    renderMainCanvas();
+    renderStepThumbs();
+    renderControls();
+  }
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+renderGrid();
+renderCard();
+</script>
+</body>
+</html>
